@@ -1,0 +1,41 @@
+services:
+  kerberos:
+    image: kerberos-dev
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        - UID=${UID:-1000}
+    volumes:
+      - ./:/var/www/app
+    ports:
+      - 9010:9010
+    expose:
+      - 9010
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+    depends_on:
+      - cache
+      - database
+
+  cache:
+    image: eqalpha/keydb
+    command:
+      - --databases 32
+    environment:
+      REDIS_REPLICATION_MODE: master
+      ALLOW_EMPTY_PASSWORD: yes
+
+  database:
+    image: mariadb
+    volumes:
+      - sql:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD=secret
+      - MARIADB_DATABASE=kerberos
+      - MARIADB_USER=kerberos
+      - MARIADB_PASSWORD=secret
+
+volumes:
+  sql:
