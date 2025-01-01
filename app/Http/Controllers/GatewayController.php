@@ -10,6 +10,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\UnauthorizedException;
 use Laravel\Sanctum\HasApiTokens;
@@ -58,7 +59,8 @@ class GatewayController
             return;
         }
 
-        if (!$request->getUser()) {
+
+        if (!$request->user()) {
             throw new AuthenticationException();
         }
 
@@ -66,9 +68,18 @@ class GatewayController
         $user = $request->user();
         /** @var PersonalAccessToken $token */
         $token = $user->currentAccessToken();
+        $path = $routing->path . '/' . $path;
+
+        Log::debug("tokens", $token->abilities);
 
         foreach ($token->abilities as $match) {
-            if (preg_match($match, $path)) {
+
+            Log::debug("match", [$path,substr($match, 0, -1)]);
+            if (str_ends_with($match, '*') && str_starts_with($path, substr($match, 0, -1))) {
+                return;
+            }
+
+            if ($match === $path) {
                 return;
             }
         }

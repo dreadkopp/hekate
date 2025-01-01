@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Controllers\GatewayController;
+use App\Models\AccessToken;
 use App\Models\Client;
 use App\Models\Routing;
 use App\Models\User;
@@ -12,12 +13,15 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
 
     public function register(): void
     {
+        // https://wearnhardt.com/2020/09/improving-laravel-sanctum-personal-access-token-performance/
+        Sanctum::usePersonalAccessTokenModel(AccessToken::class);
     }
 
     public function boot(): void
