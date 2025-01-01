@@ -95,7 +95,6 @@ return [
 
         OperationTerminated::class => [
             FlushTemporaryContainerInstances::class,
-            // DisconnectFromDatabases::class,
             CollectGarbage::class,
         ],
 
@@ -226,11 +225,8 @@ return [
     'max_execution_time' => 30,
     'swoole'             => [
         'options' => [
-            // 'log_level'          => SWOOLE_LOG_DEBUG,
             'log_level'        => SWOOLE_LOG_WARNING,
             'enable_coroutine' => true,
-            // 'hook_flags'         => SWOOLE_HOOK_ALL,
-            // 'trace_flags'        => SWOOLE_TRACE_ALL,
             'open_tcp_keepalive' => true,
             'tcp_keepidle'       => 620,
             'tcp_keepinterval'   => 1,

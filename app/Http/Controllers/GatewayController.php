@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Psr\Http\Message\ResponseInterface;
 
-class GatewayController extends Controller
+class GatewayController
 {
     public function proxy(Request $request, string $path = '/') :ResponseInterface
     {
