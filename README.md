@@ -1,4 +1,4 @@
-# hekate
+# HEKATE
 
 a configurable api gateway with included auth{entication,orization}
 

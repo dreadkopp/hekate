@@ -122,8 +122,6 @@ class GatewayController
 
     public function sendRequest(Routing $routing, Request $request, string $path, array $headers): ?ResponseInterface
     {
-        dump($path);
-
         try {
             return $this->getGuzzleClient($routing)
                 ->request(
