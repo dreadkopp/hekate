@@ -10,7 +10,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $name
@@ -22,7 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Collection<int, AccessToken> $tokens
+ * @property-read Collection<int, \App\Models\AccessToken> $tokens
  * @property-read int|null $tokens_count
  * @method static Builder<static>|User newModelQuery()
  * @method static Builder<static>|User newQuery()

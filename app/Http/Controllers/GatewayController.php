@@ -6,12 +6,13 @@ use App\Models\Routing;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Uri;
+use http\Url;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Illuminate\Validation\UnauthorizedException;
 use Laravel\Sanctum\HasApiTokens;
 use Psr\Http\Message\ResponseInterface;
@@ -30,19 +31,23 @@ class GatewayController
         $headers = $this->prepareHeaders($request);
         $response = $this->sendRequest($routing, $request, $path, $headers);
 
+        if (!$response) {
+            return new Response('', Response::HTTP_NO_CONTENT);
+        }
+
         return new Response(
             $response->getBody(),
             $response->getStatusCode(),
             array_merge($response->getHeaders(), [
-                'authenticable' => json_encode($request->user()->toArray()),
-                'authenticable_type' => $request->user()->getMorphClass(),
+                'authenticable' => json_encode($request->user()?->toArray()),
+                'authenticable_type' => $request->user()?->getMorphClass(),
             ])
         );
     }
 
     protected function getMatchingRoute(Request $request): Routing
     {
-        $basePath = $this->getBasePath($request);
+        $basePath = $request->getPathInfo();
 
         return Cache::store('apc')->remember(
             "route-lookup:$basePath",
@@ -51,27 +56,9 @@ class GatewayController
                 "route-lookup:$basePath",
                 3600,
                 fn() => Routing::query()
-                    ->where('path', "/$basePath")
+                    ->where('path', $basePath)
                     ->firstOrFail()
             )
-        );
-    }
-
-    protected function getBasePath(Request $request): string
-    {
-        $gateway = sprintf(
-            '%s://%s:%s/',
-            $request->getScheme(),
-            $request->getHost(),
-            $request->getPort()
-        );
-
-        return Str::before(
-            Str::after(
-                $request->getUri(),
-                $gateway
-            ),
-            '/'
         );
     }
 
@@ -85,17 +72,19 @@ class GatewayController
             return;
         }
 
-
         /** @var HasApiTokens $user */
         $user = $request->user();
+
         if (!$user) {
             throw new AuthenticationException();
         }
 
         $token = $user->currentAccessToken();
+
         $fullPath = $routing->path . '/' . $path;
 
-        foreach ($token->abilities as $ability) {
+
+        foreach ($token->abilities ?? [] as $ability) {
             if ($this->isAbilityMatched($ability, $fullPath)){
                 return;
             }
@@ -140,6 +129,9 @@ class GatewayController
             );
         } catch (RequestException $exception) {
             return $exception->getResponse();
+        } catch (GuzzleException $exception) {
+            dump($exception->getMessage());
+            return null;
         }
     }
 

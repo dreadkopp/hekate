@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $name
@@ -22,7 +24,42 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|Client whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class Client extends Model
+class Client extends Model implements Authenticatable
 {
+    use HasApiTokens;
 
+    public function getAuthIdentifierName()
+    {
+        return 'name';
+    }
+
+    public function getAuthIdentifier()
+    {
+       return 'name';
+    }
+
+    public function getAuthPasswordName()
+    {
+        return '';
+    }
+
+    public function getAuthPassword()
+    {
+        return '';
+    }
+
+    public function getRememberToken()
+    {
+        return '';
+    }
+
+    public function setRememberToken($value)
+    {
+        return;
+    }
+
+    public function getRememberTokenName()
+    {
+        return '';
+    }
 }

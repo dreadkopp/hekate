@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $path the path used to proxy to service
@@ -29,4 +29,9 @@ use Illuminate\Support\Carbon;
 class Routing extends Model
 {
 
+    protected $fillable = [
+        'path',
+        'endpoint',
+        'skip_auth'
+    ];
 }

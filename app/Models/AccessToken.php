@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $tokenable_type
@@ -21,7 +22,7 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
  * @property Carbon|null $expires_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Model $tokenable
+ * @property-read Model|\Eloquent $tokenable
  * @method static Builder<static>|AccessToken newModelQuery()
  * @method static Builder<static>|AccessToken newQuery()
  * @method static Builder<static>|AccessToken query()
@@ -43,7 +44,8 @@ class AccessToken extends SanctumPersonalAccessToken
 
     public static function findToken($token)
     {
-        $key = 'auth:token:' . $token;
+        $id = Str::before('|', $token);
+        $key = 'auth:token:' . $id;
         return
             Cache::store('apc')
                 ->remember(

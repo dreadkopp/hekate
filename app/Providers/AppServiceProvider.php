@@ -8,6 +8,8 @@ use App\Models\AccessToken;
 use App\Models\Client;
 use App\Models\Routing;
 use App\Models\User;
+use App\Observers\RoutingChangedObserver;
+use App\Observers\TokenChangedObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Route;
@@ -27,7 +29,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->addDynamicRedirects();
+        $this->addObservers();
+        $this->enforceMorphMap();
 
+    }
+
+    protected function enforceMorphMap(): void
+    {
         Relation::requireMorphMap();
         Relation::enforceMorphMap([
             'kerberos-user' => User::class,
@@ -35,7 +43,13 @@ class AppServiceProvider extends ServiceProvider
         ]);
     }
 
-    protected function addDynamicRedirects(): void
+    protected function addObservers() : void
+    {
+        Routing::observe([RoutingChangedObserver::class]);
+        AccessToken::observe([TokenChangedObserver::class]);
+    }
+
+    public function addDynamicRedirects(): void
     {
         // to migrate, route service provider will be booted.... and will not be able to access Redirection model
         try {
