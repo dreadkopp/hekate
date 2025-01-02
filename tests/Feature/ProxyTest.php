@@ -24,20 +24,16 @@ class ProxyTest extends TestCase
        Cache::store('apc')->flush();
        Cache::flush();
 
-       try {
-           mkdir('/tmp/test-server',recursive: true);
-       }catch (Exception ) {
-           // dont care
-       }
-       file_put_contents('/tmp/test-server/index.html', 'hello');
-       $this->pseudoServer = new Process(['php', '-S', '0.0.0.0:7000'], '/tmp/test-server');
+
+       $this->pseudoServer = new Process(['php', '-S', '0.0.0.0:7000', base_path('/tests/Fixtures/mockServer.php')],'/tmp');
        $this->pseudoServer->start();
+       
+       usleep(100);
 
    }
    
    protected function tearDown(): void
    {
-       unlink('/tmp/test-server/index.html');
        $this->pseudoServer->stop();
        parent::tearDown();
    }
@@ -58,9 +54,38 @@ class ProxyTest extends TestCase
             ->run();
 
 
-        $this->get('/test-server/')
+        $this->get('/test-server')
             ->assertOk()
-            ->assertSee('hello');
+            ->assertSee('Requested Route: /');
+
+    }
+
+    public function testRoutingMatchesCorrectSubPath(): void
+    {
+
+        Routing::query()
+            ->create([
+                    'path' => '/test-server',
+                    'endpoint' => 'http://127.0.0.1:7000',
+                    'skip_auth' => true
+                ]
+            );
+
+        $this->get('/test-server/foo')
+            ->assertOk()
+            ->assertSee('Requested Route: /foo');
+
+        $this->get('/test-server/foo/bar')
+            ->assertOk()
+            ->assertSee('Requested Route: /foo/bar');
+
+
+
+        $this->get('/test-server/foo/bar/baz-route')
+            ->assertOk()
+            ->assertSee('Requested Route: /foo/bar/baz-route');
+
+
 
     }
 
@@ -99,7 +124,7 @@ class ProxyTest extends TestCase
         $headers = $this
             ->withHeaders(['Authorization' => 'Bearer ' . $token->plainTextToken])
             ->get('/test-server/')
-            ->assertSee('hello')
+            ->assertSee('Requested Route: /')
             ->headers;
 
         self::assertEquals('kerberos-user', $headers->get('authenticable_type'));
@@ -132,7 +157,7 @@ class ProxyTest extends TestCase
         $headers = $this
             ->withHeaders(['Authorization' => 'Bearer ' . $token->plainTextToken])
             ->get('/test-server/')
-            ->assertSee('hello')
+            ->assertSee('Requested Route: /')
             ->headers;
 
         self::assertEquals('kerberos-client', $headers->get('authenticable_type'));

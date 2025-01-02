@@ -47,7 +47,9 @@ class GatewayController
 
     protected function getMatchingRoute(Request $request): Routing
     {
-        $basePath = $request->getPathInfo();
+        $extractSubStringBeforeSecondSlash = fn(string $s) => substr($s, 0, strpos($s, '/', strpos($s, '/') + 1) ?: strlen($s));
+
+        $basePath = $extractSubStringBeforeSecondSlash($request->getPathInfo());
 
         return Cache::store('apc')->remember(
             "route-lookup:$basePath",
@@ -120,6 +122,8 @@ class GatewayController
 
     public function sendRequest(Routing $routing, Request $request, string $path, array $headers): ?ResponseInterface
     {
+        dump($path);
+
         try {
             return $this->getGuzzleClient($routing)
                 ->request(

@@ -65,7 +65,11 @@ class AppServiceProvider extends ServiceProvider
         $routes = Route::getRoutes();
 
         Routing::all()->each(function (Routing $routing) use ($routes): void {
-            $routes->add(Route::any($routing->path . '/{path?}', [GatewayController::class, 'proxy']))
+            $routes->add(
+                Route::any(
+                    $routing->path . '/{path?}',
+                    [GatewayController::class, 'proxy']
+                )->where('path', '.*'))
                 ->name('proxy.to.' . $routing->path);
 
         });

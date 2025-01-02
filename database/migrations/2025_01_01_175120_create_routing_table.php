@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('routings', function (Blueprint $table) {
             $table->id();
-            $table->string('path')->index()->comment('the path used to proxy to service');
+            $table->string('path')->unique()->index()->comment('the path used to proxy to service');
             $table->string('endpoint')->comment('target url to proxy to');
             $table->boolean('skip_auth')->default(false);
             $table->timestamps();
