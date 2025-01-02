@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        dump($user->createToken('google-access' , ['/google*'])->plainTextToken);
+        dump('google access', $user->createToken('google-access' , ['/google*'])->plainTextToken);
+        dump('full access', $user->createToken('full-access' , ['*'])->plainTextToken);
 
         $routing = new Routing();
 

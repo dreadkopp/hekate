@@ -72,6 +72,7 @@ RUN addgroup -S kerberos -g $GID && adduser -S kerberos -G kerberos -u $UID && c
 
 RUN chown -R kerberos:kerberos /var/log
 
+RUN echo "apc.enable_cli=On" > /usr/local/etc/php/conf.d/30_apc_on.ini
 
 USER kerberos
 

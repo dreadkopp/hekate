@@ -10,8 +10,9 @@ add users and clients as authenticable entities
 
 TODO:
 
+- [x] implement authorization via extended sanctum
+- [x] use sanctum roles to extend auth by regex matching of path
+- [ ] patch problems when there is a path in the endpoint
 - [ ] remove unneeded modules from stack
-- [ ] implement authorization via extended sanctum
-- [ ] use sanctum roles to extend auth by regex matching of path
 - [ ] reload/cache routes when manipulating routes + invalidate caches
 - [ ] add admin mgmt interface

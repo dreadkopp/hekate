@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -24,28 +25,25 @@ class GatewayController
      * @throws UnauthorizedException
      * @throws GuzzleException
      */
-    public function proxy(Request $request, string $path = '/') :ResponseInterface
+    public function proxy(Request $request, string $path = '/') : Response
     {
         $routing = $this->getMatchingRoute($request);
 
         $this->checkAuth($request, $routing, $path);
 
-        $headers = $request->headers->all();
-        unset($headers['host']);
+        $headers = $this->prepareHeaders($request);
 
-        try {
-            return $this
-                ->getGuzzleClient($routing)
-                ->request(
-                    $request->method(),
-                    $path,
-                    [
-                        'headers' => $headers
-                    ]
-                );
-        } catch (RequestException $exception) {
-            return $exception->getResponse();
-        }
+        $response = $this->request($routing, $request, $path, $headers);
+        // set authenticable to header
+
+        return new Response(
+            $response->getBody(),
+            $response->getStatusCode(),
+            $response->getHeaders() + [
+                'authenticable' => json_encode($request->user()->toArray()),
+                'authenticable_type' => $request->user()->getMorphClass(),
+            ]
+        );
 
     }
 
@@ -70,12 +68,13 @@ class GatewayController
         $token = $user->currentAccessToken();
         $path = $routing->path . '/' . $path;
 
-        Log::debug("tokens", $token->abilities);
-
         foreach ($token->abilities as $match) {
 
-            Log::debug("match", [$path,substr($match, 0, -1)]);
-            if (str_ends_with($match, '*') && str_starts_with($path, substr($match, 0, -1))) {
+            if (
+                str_ends_with($match, '*') &&
+                (str_starts_with($path, substr($match, 0, -1)) || strlen($match) === 1)
+            ) {
+
                 return;
             }
 
@@ -130,5 +129,31 @@ class GatewayController
                 )
             );
 
+    }
+
+    public function prepareHeaders(Request $request): array
+    {
+        $headers = $request->headers->all();
+        unset($headers['host']);
+
+        return $headers;
+    }
+
+    public function request(Routing $routing, Request $request, string $path, array $headers): ?ResponseInterface
+    {
+
+        try {
+            return $this
+                ->getGuzzleClient($routing)
+                ->request(
+                    $request->method(),
+                    $path,
+                    [
+                        'headers' => $headers
+                    ]
+                );
+        } catch (RequestException $exception) {
+            return $exception->getResponse();
+        }
     }
 }

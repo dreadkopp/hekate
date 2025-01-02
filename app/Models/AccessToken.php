@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 /**
@@ -18,19 +21,19 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $tokenable
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereAbilities($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereExpiresAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereLastUsedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereToken($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereTokenableId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereTokenableType($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|AccessToken whereUpdatedAt($value)
+ * @method static Builder<static>|AccessToken newModelQuery()
+ * @method static Builder<static>|AccessToken newQuery()
+ * @method static Builder<static>|AccessToken query()
+ * @method static Builder<static>|AccessToken whereAbilities($value)
+ * @method static Builder<static>|AccessToken whereCreatedAt($value)
+ * @method static Builder<static>|AccessToken whereExpiresAt($value)
+ * @method static Builder<static>|AccessToken whereId($value)
+ * @method static Builder<static>|AccessToken whereLastUsedAt($value)
+ * @method static Builder<static>|AccessToken whereName($value)
+ * @method static Builder<static>|AccessToken whereToken($value)
+ * @method static Builder<static>|AccessToken whereTokenableId($value)
+ * @method static Builder<static>|AccessToken whereTokenableType($value)
+ * @method static Builder<static>|AccessToken whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class AccessToken extends SanctumPersonalAccessToken
@@ -54,4 +57,27 @@ class AccessToken extends SanctumPersonalAccessToken
         }
         return false;
     }
+
+    public static function findToken($token)
+    {
+        $key = 'auth:token:'.$token;
+        return
+            Cache::store('apc')
+                ->remember(
+                    $key,
+                    300,
+                    fn () =>
+                    Cache::remember(
+                        $key,
+                        3600,
+                        function() use ($token) {
+                            $token = parent::findToken($token);
+                            $token->load(['tokenable']);
+                            return $token;
+                        }
+                    )
+                );
+    }
+
+
 }
