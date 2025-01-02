@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 /**
- * 
+ *
  *
  * @property int $id
  * @property string $tokenable_type
@@ -16,11 +17,11 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
  * @property string $name
  * @property string $token
  * @property array<array-key, mixed>|null $abilities
- * @property \Illuminate\Support\Carbon|null $last_used_at
- * @property \Illuminate\Support\Carbon|null $expires_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $tokenable
+ * @property Carbon|null $last_used_at
+ * @property Carbon|null $expires_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Model $tokenable
  * @method static Builder<static>|AccessToken newModelQuery()
  * @method static Builder<static>|AccessToken newQuery()
  * @method static Builder<static>|AccessToken query()
@@ -40,6 +41,26 @@ class AccessToken extends SanctumPersonalAccessToken
 {
     protected $table = 'personal_access_tokens';
 
+    public static function findToken($token)
+    {
+        $key = 'auth:token:' . $token;
+        return
+            Cache::store('apc')
+                ->remember(
+                    $key,
+                    300,
+                    fn() => Cache::remember(
+                        $key,
+                        3600,
+                        function () use ($token) {
+                            $token = parent::findToken($token);
+                            $token->load(['tokenable']);
+                            return $token;
+                        }
+                    )
+                );
+    }
+
     /**
      * Limit saving of PersonalAccessToken records
      *
@@ -52,31 +73,10 @@ class AccessToken extends SanctumPersonalAccessToken
     {
         $changes = $this->getDirty();
         // Check for 2 changed values because one is always the updated_at column
-        if (! array_key_exists('last_used_at', $changes) || count($changes) > 2) {
+        if (!array_key_exists('last_used_at', $changes) || count($changes) > 2) {
             parent::save();
         }
         return false;
-    }
-
-    public static function findToken($token)
-    {
-        $key = 'auth:token:'.$token;
-        return
-            Cache::store('apc')
-                ->remember(
-                    $key,
-                    300,
-                    fn () =>
-                    Cache::remember(
-                        $key,
-                        3600,
-                        function() use ($token) {
-                            $token = parent::findToken($token);
-                            $token->load(['tokenable']);
-                            return $token;
-                        }
-                    )
-                );
     }
 
 

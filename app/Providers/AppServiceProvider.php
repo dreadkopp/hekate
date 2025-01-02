@@ -8,11 +8,8 @@ use App\Models\AccessToken;
 use App\Models\Client;
 use App\Models\Routing;
 use App\Models\User;
-use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -54,8 +51,8 @@ class AppServiceProvider extends ServiceProvider
         $routes = Route::getRoutes();
 
         Routing::all()->each(function (Routing $routing) use ($routes): void {
-            $routes->add(Route::any($routing->path.'/{path?}',[GatewayController::class, 'proxy']))
-                ->name('proxy.to.'.$routing->path);
+            $routes->add(Route::any($routing->path . '/{path?}', [GatewayController::class, 'proxy']))
+                ->name('proxy.to.' . $routing->path);
 
         });
     }

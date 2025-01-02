@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\UnauthorizedException;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,7 +24,7 @@ class GatewayController
      * @throws UnauthorizedException
      * @throws GuzzleException
      */
-    public function proxy(Request $request, string $path = '/') : Response
+    public function proxy(Request $request, string $path = '/'): Response
     {
         $routing = $this->getMatchingRoute($request);
 
@@ -47,11 +46,37 @@ class GatewayController
 
     }
 
+    protected function getMatchingRoute(Request $request): Routing
+    {
+        $host = $request->getHost();
+        $port = $request->getPort();
+        $scheme = $request->getScheme();
+        $gateway = $scheme . '://' . $host . ':' . $port . '/';
+
+        $basePath =
+            Str::before(
+                Str::after($request->getUri(), $gateway),
+                '/'
+            );
+
+        return Cache::store('apc')
+            ->remember(
+                'route-lookup:' . $basePath,
+                3600,
+                fn() => Cache::remember(
+                    'route-lookup:' . $basePath,
+                    3600,
+                    fn() => Routing::query()->where('path', '/' . $basePath)->firstOrFail()
+                )
+            );
+
+    }
+
     /**
      * @throws AuthenticationException
      * @throws UnauthorizedException
      */
-    protected function checkAuth(Request $request, Routing $routing, string $path) : void
+    protected function checkAuth(Request $request, Routing $routing, string $path): void
     {
         if ($routing->skip_auth) {
             return;
@@ -87,50 +112,6 @@ class GatewayController
 
     }
 
-    protected function getGuzzleClient(Routing $routing): Client
-    {
-        $serviceName = $routing->path;
-        if (App::has($serviceName . "-client")) {
-            return App::get($serviceName . '-client');
-        }
-
-        $client = new Client(
-            [
-                'base_uri' => $routing->endpoint,
-            ]
-        );
-
-        App::instance($serviceName . '-client', $client);
-
-        return $client;
-    }
-
-    protected function getMatchingRoute(Request $request): Routing
-    {
-        $host = $request->getHost();
-        $port = $request->getPort();
-        $scheme = $request->getScheme();
-        $gateway = $scheme . '://' . $host . ':' . $port . '/';
-
-        $basePath =
-            Str::before(
-                Str::after($request->getUri(), $gateway),
-                '/'
-            );
-
-        return Cache::store('apc')
-            ->remember(
-                'route-lookup:' . $basePath,
-                3600,
-                fn () => Cache::remember(
-                    'route-lookup:' . $basePath,
-                    3600,
-                    fn() => Routing::query()->where('path', '/' . $basePath)->firstOrFail()
-                )
-            );
-
-    }
-
     public function prepareHeaders(Request $request): array
     {
         $headers = $request->headers->all();
@@ -155,5 +136,23 @@ class GatewayController
         } catch (RequestException $exception) {
             return $exception->getResponse();
         }
+    }
+
+    protected function getGuzzleClient(Routing $routing): Client
+    {
+        $serviceName = $routing->path;
+        if (App::has($serviceName . '-client')) {
+            return App::get($serviceName . '-client');
+        }
+
+        $client = new Client(
+            [
+                'base_uri' => $routing->endpoint,
+            ]
+        );
+
+        App::instance($serviceName . '-client', $client);
+
+        return $client;
     }
 }
