@@ -76,6 +76,6 @@ RUN echo "apc.enable_cli=On" > /usr/local/etc/php/conf.d/30_apc_on.ini
 
 USER kerberos
 
-ENTRYPOINT php artisan octane:start --host=0.0.0.0 --port=9010
+ENTRYPOINT php artisan octane:start --host=0.0.0.0 --port=9010 --max-requests=2000
 
-ENTRYPOINT php artisan octane:start --host=0.0.0.0 --port=9010 --watch
+ENTRYPOINT php artisan octane:start --host=0.0.0.0 --port=9010  --max-requests=2000 --watch
