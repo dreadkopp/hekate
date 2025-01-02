@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\UnauthorizedException;
 use Laravel\Sanctum\HasApiTokens;
-use Laravel\Sanctum\PersonalAccessToken;
 use Psr\Http\Message\ResponseInterface;
 
 class GatewayController
@@ -27,49 +26,53 @@ class GatewayController
     public function proxy(Request $request, string $path = '/'): Response
     {
         $routing = $this->getMatchingRoute($request);
-
         $this->checkAuth($request, $routing, $path);
-
         $headers = $this->prepareHeaders($request);
-
-        $response = $this->request($routing, $request, $path, $headers);
-        // set authenticable to header
+        $response = $this->sendRequest($routing, $request, $path, $headers);
 
         return new Response(
             $response->getBody(),
             $response->getStatusCode(),
-            $response->getHeaders() + [
+            array_merge($response->getHeaders(), [
                 'authenticable' => json_encode($request->user()->toArray()),
                 'authenticable_type' => $request->user()->getMorphClass(),
-            ]
+            ])
         );
-
     }
 
     protected function getMatchingRoute(Request $request): Routing
     {
-        $host = $request->getHost();
-        $port = $request->getPort();
-        $scheme = $request->getScheme();
-        $gateway = $scheme . '://' . $host . ':' . $port . '/';
+        $basePath = $this->getBasePath($request);
 
-        $basePath =
-            Str::before(
-                Str::after($request->getUri(), $gateway),
-                '/'
-            );
-
-        return Cache::store('apc')
-            ->remember(
-                'route-lookup:' . $basePath,
+        return Cache::store('apc')->remember(
+            "route-lookup:$basePath",
+            3600,
+            fn() => Cache::remember(
+                "route-lookup:$basePath",
                 3600,
-                fn() => Cache::remember(
-                    'route-lookup:' . $basePath,
-                    3600,
-                    fn() => Routing::query()->where('path', '/' . $basePath)->firstOrFail()
-                )
-            );
+                fn() => Routing::query()
+                    ->where('path', "/$basePath")
+                    ->firstOrFail()
+            )
+        );
+    }
 
+    protected function getBasePath(Request $request): string
+    {
+        $gateway = sprintf(
+            '%s://%s:%s/',
+            $request->getScheme(),
+            $request->getHost(),
+            $request->getPort()
+        );
+
+        return Str::before(
+            Str::after(
+                $request->getUri(),
+                $gateway
+            ),
+            '/'
+        );
     }
 
     /**
@@ -83,33 +86,39 @@ class GatewayController
         }
 
 
-        if (!$request->user()) {
+        /** @var HasApiTokens $user */
+        $user = $request->user();
+        if (!$user) {
             throw new AuthenticationException();
         }
 
-        /** @var HasApiTokens $user */
-        $user = $request->user();
-        /** @var PersonalAccessToken $token */
         $token = $user->currentAccessToken();
-        $path = $routing->path . '/' . $path;
+        $fullPath = $routing->path . '/' . $path;
 
-        foreach ($token->abilities as $match) {
-
-            if (
-                str_ends_with($match, '*') &&
-                (str_starts_with($path, substr($match, 0, -1)) || strlen($match) === 1)
-            ) {
-
-                return;
-            }
-
-            if ($match === $path) {
+        foreach ($token->abilities as $ability) {
+            if ($this->isAbilityMatched($ability, $fullPath)){
                 return;
             }
         }
 
         throw new UnauthorizedException();
+    }
 
+    protected function isAbilityMatched(string $ability, string $path): bool
+    {
+        if ($ability === $path) {
+            return true;
+        }
+
+        if ($ability === '*') {
+            return true;
+        }
+
+        if (!str_ends_with($ability,'*')) {
+            return false;
+        }
+
+        return str_starts_with($path, rtrim($ability, '*'));
     }
 
     public function prepareHeaders(Request $request): array
@@ -120,19 +129,15 @@ class GatewayController
         return $headers;
     }
 
-    public function request(Routing $routing, Request $request, string $path, array $headers): ?ResponseInterface
+    public function sendRequest(Routing $routing, Request $request, string $path, array $headers): ?ResponseInterface
     {
-
         try {
-            return $this
-                ->getGuzzleClient($routing)
+            return $this->getGuzzleClient($routing)
                 ->request(
-                    $request->method(),
-                    $path,
-                    [
-                        'headers' => $headers
-                    ]
-                );
+                $request->method(),
+                $path,
+                ['headers' => $headers]
+            );
         } catch (RequestException $exception) {
             return $exception->getResponse();
         }
@@ -142,17 +147,19 @@ class GatewayController
     {
         $serviceName = $routing->path;
         $app = App::getInstance();
-        if ($app->has($serviceName . '-client')) {
-            return $app->get($serviceName . '-client');
+
+        if ($app->has("$serviceName-client")) {
+            return $app->get("$serviceName-client");
         }
 
-        $client = new Client(
-            [
-                'base_uri' => $routing->endpoint,
-            ]
-        );
+        $client = new Client([
+            'base_uri' => $routing->endpoint,
+            'headers' => [
+                'Connection' => 'keep-alive',
+            ],
+        ]);
 
-        $app->instance($serviceName . '-client', $client);
+        $app->instance("$serviceName-client", $client);
 
         return $client;
     }
