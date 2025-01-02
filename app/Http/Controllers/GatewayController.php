@@ -141,8 +141,9 @@ class GatewayController
     protected function getGuzzleClient(Routing $routing): Client
     {
         $serviceName = $routing->path;
-        if (App::has($serviceName . '-client')) {
-            return App::get($serviceName . '-client');
+        $app = App::getInstance();
+        if ($app->has($serviceName . '-client')) {
+            return $app->get($serviceName . '-client');
         }
 
         $client = new Client(
@@ -151,7 +152,7 @@ class GatewayController
             ]
         );
 
-        App::instance($serviceName . '-client', $client);
+        $app->instance($serviceName . '-client', $client);
 
         return $client;
     }
