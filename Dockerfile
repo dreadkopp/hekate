@@ -68,13 +68,13 @@ RUN rm /etc/crontabs/root
 
 ARG UID=1000
 ARG GID=1000
-RUN addgroup -S kerberos -g $GID && adduser -S kerberos -G kerberos -u $UID && chown kerberos:kerberos /var/www/app
+RUN addgroup -S hekate -g $GID && adduser -S hekate -G hekate -u $UID && chown hekate:hekate /var/www/app
 
-RUN chown -R kerberos:kerberos /var/log
+RUN chown -R hekate:hekate /var/log
 
 RUN echo "apc.enable_cli=On" > /usr/local/etc/php/conf.d/30_apc_on.ini
 
-USER kerberos
+USER hekate
 
 ENTRYPOINT php artisan octane:start --host=0.0.0.0 --port=9010 --max-requests=2000
 

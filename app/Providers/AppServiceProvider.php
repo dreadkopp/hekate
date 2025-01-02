@@ -38,8 +38,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Relation::requireMorphMap();
         Relation::enforceMorphMap([
-            'kerberos-user' => User::class,
-            'kerberos-client' => Client::class
+            'hekate-user' => User::class,
+            'hekate-client' => Client::class
         ]);
     }
 

@@ -74,6 +74,8 @@ class AccessToken extends SanctumPersonalAccessToken
     public function save(array $options = []): bool
     {
         $changes = $this->getDirty();
+
+        // TODO: check for valid abilities * or must start with one of the defined routes
         // Check for 2 changed values because one is always the updated_at column
         if (!array_key_exists('last_used_at', $changes) || count($changes) > 2) {
             parent::save();

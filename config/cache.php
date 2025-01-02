@@ -61,6 +61,6 @@ return [
     |
     */
 
-    'prefix' => env('CACHE_PREFIX', 'kerberos-_cache_'),
+    'prefix' => env('CACHE_PREFIX', 'hekate-_cache_'),
 
 ];

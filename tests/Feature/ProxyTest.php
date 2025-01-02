@@ -79,8 +79,6 @@ class ProxyTest extends TestCase
             ->assertOk()
             ->assertSee('Requested Route: /foo/bar');
 
-
-
         $this->get('/test-server/foo/bar/baz-route')
             ->assertOk()
             ->assertSee('Requested Route: /foo/bar/baz-route');
@@ -127,7 +125,7 @@ class ProxyTest extends TestCase
             ->assertSee('Requested Route: /')
             ->headers;
 
-        self::assertEquals('kerberos-user', $headers->get('authenticable_type'));
+        self::assertEquals('hekate-user', $headers->get('authenticable_type'));
 
         $authenticatedEntity = json_decode($headers->get('authenticable'), true);
 
@@ -160,7 +158,7 @@ class ProxyTest extends TestCase
             ->assertSee('Requested Route: /')
             ->headers;
 
-        self::assertEquals('kerberos-client', $headers->get('authenticable_type'));
+        self::assertEquals('hekate-client', $headers->get('authenticable_type'));
 
         $authenticatedEntity = json_decode($headers->get('authenticable'), true);
 

@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "dreadkopp/kerberos",
+    "name": "dreadkopp/hekate",
     "type": "project",
     "description": "API gateway including auth",
     "keywords": [
