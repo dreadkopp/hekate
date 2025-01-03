@@ -1,18 +1,54 @@
-# HEKATE
+# Hekate: A Configurable API Gateway
 
-a configurable api gateway with included auth{entication,orization}
+Hekate is a Laravel-based API gateway offering dynamic route management, authentication, and authorization. Built with Laravel Octane and Sanctum, it enables efficient, secure, and scalable proxying for microservices.
 
-based on php, laravel, laravel/octane, laravel/sanctum
+Features
+	•	Dynamic Route Management: Configure proxy routes via a database.
+	•	Authentication & Authorization: Secure routes using Laravel Sanctum tokens and custom policies.
+	•	Caching & Performance: Leverages Laravel Octane and Redis for enhanced speed.
+	•	Extensibility: Customizable for advanced routing and admin interfaces.
 
-dynamically configure path and endpoint for all proxy endpoints via database
+Installation
+	1.	Clone the repository:
 
-add users and clients as authenticable entities
+git clone https://github.com/dreadkopp/hekate.git
+cd hekate
 
-TODO:
 
-- [x] implement authorization via extended sanctum
-- [x] use sanctum roles to extend auth by regex matching of path
-- [ ] patch problems when there is a path in the endpoint
-- [ ] remove unneeded modules from stack
-- [ ] reload/cache routes when manipulating routes + invalidate caches
-- [ ] add admin mgmt interface
+	2.	Install dependencies:
+
+composer install
+npm install
+
+
+	3.	Build and start
+
+docker compose up -d
+
+Configure database and other Laravel settings.
+
+	4.	Run migrations:
+
+./art migrate
+
+
+
+Usage
+	1.	Define Routes: Add entries to the routes table:
+	•	source_path: The API endpoint exposed to clients.
+	•	target_url: Backend service URL.
+	2.	Authentication: Use Sanctum tokens for protected endpoints.
+	3.	Caching: Adjust caching strategy in Laravel’s configuration.
+
+Roadmap
+	•	Advanced authorization rules
+	•	Enhanced caching and routing strategies
+	•	Admin management interface
+
+Contributing
+
+Pull requests are welcome! Please check the contribution guide.
+
+For more details, visit the GitHub repository.
+
+Feel free to expand this with specifics from the source code.
