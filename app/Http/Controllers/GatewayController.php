@@ -114,7 +114,10 @@ class GatewayController
     {
         // add authenticated
         $headers = $request->headers->all();
+
+        // clear old target
         unset($headers['host']);
+
         // prevent spoofing
         unset($headers['authenticable']);
         unset($headers['authenticable_type']);
