@@ -43,8 +43,4 @@ Roadmap
 
 Contributing
 
-Pull requests are welcome! Please check the contribution guide.
-
-For more details, visit the GitHub repository.
-
-Feel free to expand this with specifics from the source code.
+Pull requests are welcome ;)
