@@ -8,29 +8,23 @@ Features:
 - Caching & Performance: Leverages Laravel Octane and Redis for enhanced speed.
 - Extensibility: Customizable for advanced routing and admin interfaces.
 
-Installation
-	1.	Clone the repository:
-
+Installation:
+- Clone the repository:
 ```
 git clone https://github.com/dreadkopp/hekate.git
 cd hekate
 ```
-
-	2.	Install dependencies:
+- Install dependencies:
 ```
 composer install
 npm install
 ```
-
-	3.	Build and start
-
+- Build and start
 ```
 docker compose up -d
 ```
-
-Configure database and other Laravel settings.
-
-	4.	Run migrations:
+- Configure database and other Laravel settings.
+- Run migrations:
 ```
 ./art migrate
 ```
