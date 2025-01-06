@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- * 
+ * a device or application with a static token
  *
  * @property int $id
  * @property string $name
