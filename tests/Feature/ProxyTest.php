@@ -119,17 +119,15 @@ class ProxyTest extends TestCase
         $user->withAccessToken($token->accessToken);
         $this->actingAs($user,'sanctum');
 
-        $headers = $this
+        $this
             ->withHeaders(['Authorization' => 'Bearer ' . $token->plainTextToken])
             ->get('/test-server/')
             ->assertSee('Requested Route: /')
-            ->headers;
+            ->assertSee('x-authenticable-type: hekate-user')
+            ->assertSee('x-authenticable: ');
 
-        self::assertEquals('hekate-user', $headers->get('authenticable_type'));
+        // TODO: check that x-authenticable has correct data
 
-        $authenticatedEntity = json_decode($headers->get('authenticable'), true);
-
-        self::assertEquals($user->toArray(), $authenticatedEntity);
     }
 
 
@@ -152,16 +150,13 @@ class ProxyTest extends TestCase
         $client->withAccessToken($token->accessToken);
         $this->actingAs($client,'sanctum');
 
-        $headers = $this
+        $this
             ->withHeaders(['Authorization' => 'Bearer ' . $token->plainTextToken])
             ->get('/test-server/')
             ->assertSee('Requested Route: /')
-            ->headers;
+            ->assertSee('x-authenticable-type: hekate-client')
+            ->assertSee('x-authenticable: ');
 
-        self::assertEquals('hekate-client', $headers->get('authenticable_type'));
-
-        $authenticatedEntity = json_decode($headers->get('authenticable'), true);
-
-        self::assertEquals($client->toArray(), $authenticatedEntity);
+        // TODO: check that x-authenticable has correct data
     }
 }

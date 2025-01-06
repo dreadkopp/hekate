@@ -36,10 +36,7 @@ class GatewayController
         return new Response(
             $response->getBody(),
             $response->getStatusCode(),
-            array_merge($response->getHeaders(), [
-                'authenticable' => json_encode($request->user()?->toArray()),
-                'authenticable_type' => $request->user()?->getMorphClass(),
-            ])
+            $response->getHeaders()
         );
     }
 
@@ -119,11 +116,11 @@ class GatewayController
         unset($headers['host']);
 
         // prevent spoofing
-        unset($headers['authenticable']);
-        unset($headers['authenticable_type']);
+        unset($headers['x-authenticable']);
+        unset($headers['x-authenticable-type']);
 
-        $headers['authenticable'] = json_encode($request->user()?->toArray());
-        $headers['authenticable_type'] = $request->user()?->getMorphClass();
+        $headers['x-authenticable'] = json_encode($request->user()?->toArray());
+        $headers['x-authenticable-type'] = $request->user()?->getMorphClass();
 
         return $headers;
     }
