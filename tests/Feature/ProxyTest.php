@@ -124,9 +124,7 @@ class ProxyTest extends TestCase
             ->get('/test-server/')
             ->assertSee('Requested Route: /')
             ->assertSee('x-authenticable-type: hekate-user')
-            ->assertSee('x-authenticable: ');
-
-        // TODO: check that x-authenticable has correct data
+            ->assertSee('x-authenticable: '. json_encode($user->toArray()),false);
 
     }
 
@@ -155,8 +153,7 @@ class ProxyTest extends TestCase
             ->get('/test-server/')
             ->assertSee('Requested Route: /')
             ->assertSee('x-authenticable-type: hekate-client')
-            ->assertSee('x-authenticable: ');
+            ->assertSee('x-authenticable: '. json_encode($client->toArray()),false);
 
-        // TODO: check that x-authenticable has correct data
     }
 }
