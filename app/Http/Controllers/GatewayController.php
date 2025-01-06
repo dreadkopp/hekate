@@ -6,8 +6,6 @@ use App\Models\Routing;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Psr7\Uri;
-use http\Url;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -114,8 +112,15 @@ class GatewayController
 
     public function prepareHeaders(Request $request): array
     {
+        // add authenticated
         $headers = $request->headers->all();
         unset($headers['host']);
+        // prevent spoofing
+        unset($headers['authenticable']);
+        unset($headers['authenticable_type']);
+
+        $headers['authenticable'] = json_encode($request->user()?->toArray());
+        $headers['authenticable_type'] = $request->user()?->getMorphClass();
 
         return $headers;
     }
@@ -132,7 +137,6 @@ class GatewayController
         } catch (RequestException $exception) {
             return $exception->getResponse();
         } catch (GuzzleException $exception) {
-            dump($exception->getMessage());
             return null;
         }
     }
